@@ -1,6 +1,6 @@
 package ru.neustupov.demolibrary.model;
 
-public enum  Level {
+public enum Level {
   ONE("One"),
   TWO("Two"),
   THREE("Three");

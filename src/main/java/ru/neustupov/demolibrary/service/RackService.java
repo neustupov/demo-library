@@ -9,7 +9,15 @@ public class RackService {
 
   private RackRepository rackRepository;
 
-  public Rack getRackById(Long id){
+  public RackService(RackRepository rackRepository) {
+    this.rackRepository = rackRepository;
+  }
+
+  public Rack getRackById(Long id) {
     return rackRepository.getById(id);
+  }
+
+  public Rack save(Rack rack) {
+    return rackRepository.save(rack);
   }
 }

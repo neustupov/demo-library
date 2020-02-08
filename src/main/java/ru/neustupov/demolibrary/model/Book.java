@@ -20,13 +20,4 @@ public class Book extends AbstractEntity {
   private Rack rack;
 
   private String name;
-
-  public Book(String name) {
-    this.name = name;
-  }
-
-  public Book(String name, Enum level) {
-    this.name = name;
-    this.level = level;
-  }
 }
