@@ -2,6 +2,7 @@ package ru.neustupov.demolibrary.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,7 +41,12 @@ public class BookController {
 
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   public Book getBookById(@PathVariable("id") Long id) {
-    return bookService.getBookById(id);
+    return bookService.getBookById(id).orElseThrow(() -> new EntityNotFoundException(id.toString()));
+  }
+
+  @GetMapping(value = "/name/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Book getBookByName(@PathVariable("name") String name) {
+    return bookService.getBookByName(name);
   }
 
   @GetMapping(value = "/level/{level}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -83,11 +90,27 @@ public class BookController {
     return responseEntity;
   }
 
+  @PutMapping("/{id}")
+  public Book updateBook(@RequestBody Book book, @PathVariable Long id) {
+
+    return bookService.getBookById(id)
+        .map(bc -> {
+          bc.setName(book.getName());
+          bc.setRack(book.getRack());
+          bc.setLevel(book.getLevel());
+          return bookService.save(bc);
+        })
+        .orElseGet(() -> {
+          book.setId(id);
+          return bookService.save(book);
+        });
+  }
+
   @DeleteMapping(value = "/{id}")
   public ResponseEntity<Long> deleteBook(@PathVariable Long id) {
 
     ResponseEntity responseEntity;
-    Book book = bookService.getBookById(id);
+    Book book = bookService.getBookById(id).orElseThrow(() -> new EntityNotFoundException(id.toString()));
 
     if (book != null) {
       bookService.deleteById(book);
@@ -110,13 +133,7 @@ public class BookController {
   }
 
   private Rack getRackById(Long id) {
-    Rack rack = null;
-    try {
-      rack = rackService.getRackById(id);
-    } catch (Exception e) {
-      logger.error("Not found Rack with id: " + id);
-    }
-    return rack;
+    return rackService.getRackById(id).orElseThrow(() -> new EntityNotFoundException(id.toString()));
   }
 
   private Level getLevelByCode(String level){

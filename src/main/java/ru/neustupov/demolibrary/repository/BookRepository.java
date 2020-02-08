@@ -7,7 +7,7 @@ import ru.neustupov.demolibrary.model.Rack;
 
 public interface BookRepository extends JpaRepository<Book, Long> {
 
-  Book getBookById(Long id);
+  Book getBookByName(String name);
 
   List<Book> getAllByLevel(Enum level);
 

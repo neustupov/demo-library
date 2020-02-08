@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,6 @@ public class RackController {
 
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   public List<Book> getBookByRackId(@PathVariable("id") Long id) {
-    //Long rackId = Long.parseLong(id);
     Rack rack = getRackById(id);
     List<Book> rackBooks = new ArrayList<>();
     if (rack != null) {
@@ -61,12 +61,6 @@ public class RackController {
   }
 
   private Rack getRackById(Long id) {
-    Rack rack = null;
-    try {
-      rack = rackService.getRackById(id);
-    } catch (Exception e) {
-      logger.error("Not found Rack with id: " + id);
-    }
-    return rack;
+    return rackService.getRackById(id).orElseThrow(() -> new EntityNotFoundException(id.toString()));
   }
 }

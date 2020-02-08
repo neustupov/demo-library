@@ -1,6 +1,7 @@
 package ru.neustupov.demolibrary.service;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import ru.neustupov.demolibrary.model.Book;
 import ru.neustupov.demolibrary.model.Rack;
@@ -15,8 +16,12 @@ public class BookService {
     this.bookRepository = bookRepository;
   }
 
-  public Book getBookById(Long id) {
-    return bookRepository.getBookById(id);
+  public Optional<Book> getBookById(Long id) {
+    return bookRepository.findById(id);
+  }
+
+  public Book getBookByName(String name){
+    return bookRepository.getBookByName(name);
   }
 
   public List<Book> getAllByLevel(Enum level) {

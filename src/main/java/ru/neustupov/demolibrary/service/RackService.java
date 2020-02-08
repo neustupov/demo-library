@@ -1,5 +1,6 @@
 package ru.neustupov.demolibrary.service;
 
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import ru.neustupov.demolibrary.model.Rack;
 import ru.neustupov.demolibrary.repository.RackRepository;
@@ -13,8 +14,8 @@ public class RackService {
     this.rackRepository = rackRepository;
   }
 
-  public Rack getRackById(Long id) {
-    return rackRepository.getById(id);
+  public Optional<Rack> getRackById(Long id) {
+    return rackRepository.findById(id);
   }
 
   public Rack save(Rack rack) {
