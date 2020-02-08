@@ -1,5 +1,6 @@
 package ru.neustupov.demolibrary.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
@@ -17,6 +18,7 @@ public class Book extends AbstractEntity {
   private Enum level;
 
   @ManyToOne
+  @JsonIgnoreProperties("books")
   private Rack rack;
 
   private String name;

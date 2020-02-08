@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,14 +54,9 @@ public class BookController {
   }
 
   @GetMapping(value = "/rack/{rack}/level/{level}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public List<Book> getBookByLevel(@PathVariable("rack") String rack,
+  public List<Book> getBookByRackAndLevel(@PathVariable("rack") String rack,
       @PathVariable("level") String level) {
-    Enum levelEnum = null;
-    try {
-      levelEnum = Level.valueOf(level);
-    } catch (Exception e) {
-      logger.error("Not found level: " + level);
-    }
+    Enum levelEnum = getLevelByCode(level);
     Rack rc = getRackById(Long.parseLong(rack));
     List<Book> books = new ArrayList<>();
     if (levelEnum != null && rc != null) {
@@ -69,35 +65,48 @@ public class BookController {
     return books;
   }
 
-  /*@PostMapping(value = "/rack/{rack}/level/{level}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Book> createBookByRackAndLevel(@RequestBody Book book) {
+  @PostMapping(value = "/rack/{rack}/level/{level}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Book> createBookByRackAndLevel(@PathVariable("rack") String rack,
+                                                       @PathVariable("level") String level,
+                                                       @RequestBody Book book) {
+    Rack rc = getRackById(Long.parseLong(rack));
+    Level lv = getLevelByCode(level);
 
-  }*/
-
-  @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Book> createBook(@RequestBody Book book) {
-
-    ResponseEntity<Book> responseEntity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-    Book newBook = new Book();
-    newBook.setName(book.getName());
-    newBook.setLevel(book.getLevel());
-
-    Rack bookRack = book.getRack();
-
-    if (bookRack != null) {
-      Long rackId = bookRack.getId();
-      Rack rack;
-      if (rackId != null) {
-        rack = getRackById(rackId);
-        newBook.setRack(rack);
-        responseEntity = ResponseEntity.ok(bookService.save(newBook));
-      }
+    ResponseEntity<Book> responseEntity;
+    if (rc != null && lv != null){
+      Book newBook = createBook(rc, lv, book);
+      responseEntity = ResponseEntity.ok(bookService.save(newBook));
     } else {
       responseEntity = new ResponseEntity<>(null, null, HttpStatus.BAD_REQUEST);
     }
 
     return responseEntity;
+  }
+
+  @DeleteMapping(value = "/{id}")
+  public ResponseEntity<Long> deleteBook(@PathVariable Long id) {
+
+    ResponseEntity responseEntity;
+    Book book = bookService.getBookById(id);
+
+    if (book != null) {
+      bookService.deleteById(book);
+      responseEntity = new ResponseEntity<>(id, HttpStatus.OK);
+    }else {
+      responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    return responseEntity;
+  }
+
+  private Book createBook(Rack rack, Level level, Book book) {
+
+    Book newBook = new Book();
+    newBook.setName(book.getName());
+    newBook.setLevel(level);
+    newBook.setRack(rack);
+
+    return newBook;
   }
 
   private Rack getRackById(Long id) {
@@ -108,5 +117,15 @@ public class BookController {
       logger.error("Not found Rack with id: " + id);
     }
     return rack;
+  }
+
+  private Level getLevelByCode(String level){
+    Level levelEnum = null;
+    try {
+      levelEnum = Level.valueOf(level);
+    } catch (Exception e) {
+      logger.error("Not found level: " + level);
+    }
+    return levelEnum;
   }
 }
