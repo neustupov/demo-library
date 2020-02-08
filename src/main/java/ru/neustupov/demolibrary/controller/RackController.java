@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +16,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.neustupov.demolibrary.exception.ResourceNotFoundException;
 import ru.neustupov.demolibrary.model.Book;
 import ru.neustupov.demolibrary.model.Rack;
 import ru.neustupov.demolibrary.service.BookService;
 import ru.neustupov.demolibrary.service.RackService;
 
 @RestController
-@RequestMapping("racks")
+@RequestMapping("/api/v1/racks")
 public class RackController {
 
   private Logger logger = LoggerFactory.getLogger(RackController.class);
@@ -39,7 +39,7 @@ public class RackController {
   }
 
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public List<Book> getBookByRackId(@PathVariable("id") Long id) {
+  public List<Book> getBookByRackId(@PathVariable("id") Long id) throws ResourceNotFoundException{
     Rack rack = getRackById(id);
     List<Book> rackBooks = new ArrayList<>();
     if (rack != null) {
@@ -48,7 +48,7 @@ public class RackController {
     return rackBooks != null ? rackBooks : Collections.emptyList();
   }
 
-  @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Rack> createRack(@RequestBody Rack rack) {
     Rack newRack = new Rack();
     Set<Book> books = rack.getBooks();
@@ -60,7 +60,8 @@ public class RackController {
     return ResponseEntity.ok(rackService.save(rack));
   }
 
-  private Rack getRackById(Long id) {
-    return rackService.getRackById(id).orElseThrow(() -> new EntityNotFoundException(id.toString()));
+  private Rack getRackById(Long id) throws ResourceNotFoundException {
+    return rackService.getRackById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Rack not found for this id :: " + id));
   }
 }

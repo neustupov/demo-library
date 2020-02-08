@@ -2,7 +2,6 @@ package ru.neustupov.demolibrary.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.neustupov.demolibrary.exception.ResourceNotFoundException;
 import ru.neustupov.demolibrary.model.Book;
 import ru.neustupov.demolibrary.model.Level;
 import ru.neustupov.demolibrary.model.Rack;
@@ -24,7 +24,7 @@ import ru.neustupov.demolibrary.service.BookService;
 import ru.neustupov.demolibrary.service.RackService;
 
 @RestController
-@RequestMapping("books")
+@RequestMapping("/api/v1/books")
 public class BookController {
 
   private Logger logger = LoggerFactory.getLogger(BookController.class);
@@ -40,17 +40,25 @@ public class BookController {
   }
 
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Book getBookById(@PathVariable("id") Long id) {
-    return bookService.getBookById(id).orElseThrow(() -> new EntityNotFoundException(id.toString()));
+  public ResponseEntity<Book> getBookById(@PathVariable("id") Long id)
+      throws ResourceNotFoundException {
+    Book book = bookService.getBookById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Book not found for this id : " + id));
+    return ResponseEntity.ok().body(book);
   }
 
   @GetMapping(value = "/name/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Book getBookByName(@PathVariable("name") String name) {
-    return bookService.getBookByName(name);
+  public ResponseEntity<Book> getBookByName(@PathVariable("name") String name)
+      throws ResourceNotFoundException {
+    Book book = bookService.getBookByName(name);
+    if (book == null) {
+      throw new ResourceNotFoundException("Book not found for this name : " + name);
+    }
+    return ResponseEntity.ok().body(book);
   }
 
   @GetMapping(value = "/level/{level}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public List<Book> getBookByLevel(@PathVariable("level") String level) {
+  public List<Book> getBookByLevel(@PathVariable("level") Integer level) {
     Enum levelEnum = null;
     try {
       levelEnum = Level.valueOf(level);
@@ -62,7 +70,7 @@ public class BookController {
 
   @GetMapping(value = "/rack/{rack}/level/{level}", produces = MediaType.APPLICATION_JSON_VALUE)
   public List<Book> getBookByRackAndLevel(@PathVariable("rack") String rack,
-      @PathVariable("level") String level) {
+      @PathVariable("level") Integer level) throws ResourceNotFoundException{
     Enum levelEnum = getLevelByCode(level);
     Rack rc = getRackById(Long.parseLong(rack));
     List<Book> books = new ArrayList<>();
@@ -74,52 +82,45 @@ public class BookController {
 
   @PostMapping(value = "/rack/{rack}/level/{level}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Book> createBookByRackAndLevel(@PathVariable("rack") String rack,
-                                                       @PathVariable("level") String level,
-                                                       @RequestBody Book book) {
+      @PathVariable("level") Integer level,
+      @RequestBody Book book) throws ResourceNotFoundException {
     Rack rc = getRackById(Long.parseLong(rack));
     Level lv = getLevelByCode(level);
 
-    ResponseEntity<Book> responseEntity;
-    if (rc != null && lv != null){
-      Book newBook = createBook(rc, lv, book);
-      responseEntity = ResponseEntity.ok(bookService.save(newBook));
-    } else {
-      responseEntity = new ResponseEntity<>(null, null, HttpStatus.BAD_REQUEST);
+    if (rc == null || lv == null) {
+      throw new ResourceNotFoundException(
+          "Rack or Level not found for : " + rack + " and " + level);
     }
+    Book newBook = createBook(rc, lv, book);
 
-    return responseEntity;
+    return ResponseEntity.ok(bookService.save(newBook));
   }
 
   @PutMapping("/{id}")
-  public Book updateBook(@RequestBody Book book, @PathVariable Long id) {
+  public ResponseEntity<Book> updateBook(@RequestBody Book book, @PathVariable Long id) {
 
     return bookService.getBookById(id)
         .map(bc -> {
           bc.setName(book.getName());
           bc.setRack(book.getRack());
           bc.setLevel(book.getLevel());
-          return bookService.save(bc);
+          return ResponseEntity.ok(bookService.save(bc));
         })
         .orElseGet(() -> {
           book.setId(id);
-          return bookService.save(book);
+          return ResponseEntity.ok(bookService.save(book));
         });
   }
 
   @DeleteMapping(value = "/{id}")
-  public ResponseEntity<Long> deleteBook(@PathVariable Long id) {
+  public ResponseEntity<Long> deleteBook(@PathVariable Long id) throws ResourceNotFoundException {
 
-    ResponseEntity responseEntity;
-    Book book = bookService.getBookById(id).orElseThrow(() -> new EntityNotFoundException(id.toString()));
+    Book book = bookService.getBookById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Book not found for this id :: " + id));
 
-    if (book != null) {
-      bookService.deleteById(book);
-      responseEntity = new ResponseEntity<>(id, HttpStatus.OK);
-    }else {
-      responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
+    bookService.deleteById(book);
 
-    return responseEntity;
+    return new ResponseEntity<>(id, HttpStatus.OK);
   }
 
   private Book createBook(Rack rack, Level level, Book book) {
@@ -132,16 +133,15 @@ public class BookController {
     return newBook;
   }
 
-  private Rack getRackById(Long id) {
-    return rackService.getRackById(id).orElseThrow(() -> new EntityNotFoundException(id.toString()));
+  private Rack getRackById(Long id) throws ResourceNotFoundException {
+    return rackService.getRackById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Rack not found for this id :: " + id));
   }
 
-  private Level getLevelByCode(String level){
-    Level levelEnum = null;
-    try {
-      levelEnum = Level.valueOf(level);
-    } catch (Exception e) {
-      logger.error("Not found level: " + level);
+  private Level getLevelByCode(Integer level) throws ResourceNotFoundException{
+    Level levelEnum = Level.valueOf(level);
+    if (levelEnum == null){
+      throw new ResourceNotFoundException("Rack not found for this id :: " + level);
     }
     return levelEnum;
   }
