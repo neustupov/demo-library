@@ -1,30 +1,30 @@
 package ru.neustupov.demolibrary.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.Arrays;
-import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import ru.neustupov.demolibrary.model.Book;
 import ru.neustupov.demolibrary.model.Level;
 import ru.neustupov.demolibrary.model.Rack;
 import ru.neustupov.demolibrary.service.BookService;
 import ru.neustupov.demolibrary.service.RackService;
 
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 @AutoConfigureMockMvc
-@WebMvcTest
-
 class RackControllerTest {
 
   @Autowired
@@ -36,33 +36,37 @@ class RackControllerTest {
   @Autowired
   private BookService bookService;
 
+  private static final ObjectMapper om = new ObjectMapper();
+
   @BeforeEach
   void setUp() {
-    bookService.save(Book.builder().rack(rackService.save(new Rack())).level(Level.ONE1).name("AAA")
-        .build());
-    bookService.save(Book.builder().rack(rackService.save(new Rack())).level(Level.TWO2).name("BBB")
-        .build());
+    bookService.deleteAll();
+    rackService.deleteAll();
   }
 
   @Test
   void getBookByRackId() throws Exception {
 
-    Rack rack1 = rackService.getRackById(1L).orElse(null);
-    Rack rack2 = rackService.getRackById(2L).orElse(null);
-    Book book1 = Book.builder().rack(rack1).level(Level.ONE1).name("AAA").build();
-    Book book2 = Book.builder().rack(rack2).level(Level.TWO2).name("BBB").build();
-    List<Book> books = Arrays.asList(book1, book2);
+    Rack rack1 = rackService.save(new Rack());
+    bookService.save(Book.builder().rack(rack1).level(Level.ONE1).name("AAA")
+        .build());
 
-    MvcResult result = mvc.perform(MockMvcRequestBuilders.get("api/v1/racks/1")
-        .accept(MediaType.APPLICATION_JSON))
+    mvc.perform(get("/api/v1/racks/1"))
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andReturn();
-
-    String resultString = result.getResponse().getContentAsString();
-    assertNotNull(resultString);
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].name", is("AAA")));
   }
 
   @Test
   void createRack() throws Exception{
+
+    Rack rack1 = rackService.save(new Rack());
+
+    mvc.perform(post("/api/v1/racks/")
+        .content(om.writeValueAsString(rack1))
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id", is(1)));
   }
 }

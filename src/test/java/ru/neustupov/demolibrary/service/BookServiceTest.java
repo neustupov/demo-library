@@ -58,8 +58,7 @@ class BookServiceTest {
     Rack rack1 = rackService.save(new Rack());
     bookService.save(Book.builder().rack(rack1).level(Level.ONE1).name("AAA")
         .build());
-    Rack rack = rackService.getRackById(1L).get();
-    assertEquals(bookService.getAllByRack(rack).size(), 1);
+    assertEquals(bookService.getAllByRack(rack1).size(), 1);
   }
 
   @Test
