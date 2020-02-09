@@ -5,9 +5,9 @@ import java.util.Map;
 
 public enum Level {
 
-  ONE(1),
-  TWO(2),
-  THREE(3);
+  ONE1(1),
+  TWO2(2),
+  THREE3(3);
 
   private int value;
   private static Map map = new HashMap<>();

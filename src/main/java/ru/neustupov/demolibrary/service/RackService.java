@@ -21,4 +21,8 @@ public class RackService {
   public Rack save(Rack rack) {
     return rackRepository.save(rack);
   }
+
+  public void deleteAll(){
+    rackRepository.deleteAll();
+  }
 }

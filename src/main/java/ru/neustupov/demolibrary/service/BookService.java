@@ -43,4 +43,8 @@ public class BookService {
   public void deleteById(Book book){
     bookRepository.delete(book);
   }
+
+  public void deleteAll(){
+    bookRepository.deleteAll();
+  }
 }
