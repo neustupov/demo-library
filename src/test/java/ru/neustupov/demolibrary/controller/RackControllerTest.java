@@ -51,7 +51,9 @@ class RackControllerTest {
     bookService.save(Book.builder().rack(rack1).level(Level.ONE1).name("AAA")
         .build());
 
-    mvc.perform(get("/api/v1/racks/1"))
+    String rackId = rack1.getId().toString();
+
+    mvc.perform(get("/api/v1/racks/" + rackId))
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$", hasSize(1)))
