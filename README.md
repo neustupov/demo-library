@@ -1,7 +1,7 @@
 ## demo-library
 
 #### app port - 8090
-#### swagger url - http://localhost:8090/swagger-ui.html#/
+#### Spring Boot REST API - Docs - Swagger url - http://localhost:8090/swagger-ui.html#/
 
 #### Java8, SpringBoot 2.2.4, H2 DB, JUnit5, Tomcat, Maven
 
