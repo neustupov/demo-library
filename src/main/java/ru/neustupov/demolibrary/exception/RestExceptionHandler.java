@@ -2,7 +2,6 @@ package ru.neustupov.demolibrary.exception;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
-import javax.persistence.EntityNotFoundException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;

@@ -62,11 +62,12 @@ class RackControllerTest {
   void createRack() throws Exception{
 
     Rack rack1 = rackService.save(new Rack());
+    Integer rackId = rack1.getId().intValue();
 
     mvc.perform(post("/api/v1/racks/")
         .content(om.writeValueAsString(rack1))
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.id", is(1)));
+        .andExpect(jsonPath("$.id", is(rackId)));
   }
 }

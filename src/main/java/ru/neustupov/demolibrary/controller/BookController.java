@@ -93,7 +93,7 @@ public class BookController {
     }
     Book newBook = createBook(rc, lv, book);
 
-    return ResponseEntity.ok(bookService.save(newBook));
+    return ResponseEntity.status(HttpStatus.CREATED).body(bookService.save(newBook));
   }
 
   @PutMapping("/{id}")
